@@ -21,24 +21,41 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:${TAG}
     container_name: elasticsearch
     environment: ['http.host=0.0.0.0', 'transport.host=127.0.0.1']
-    ports: ['127.0.0.1:9200:9200']
-    networks: ['stack']
+    ports: ['0.0.0.0:9200:9200']
+    networks:
+     - network
 
   kibana:
     image: docker.elastic.co/kibana/kibana:${TAG}
     container_name: kibana
-    ports: ['127.0.0.1:5601:5601']
-    networks: ['stack']
+    ports: ['0.0.0.0:5601:5601']
+    networks:
+     - network
     depends_on: ['elasticsearch']
+    #volumes:
+    #  - ./config/kibana/*:/usr/share/kibana/*
 
   logstash:
     image: docker.elastic.co/logstash/logstash:${TAG}
     container_name: logstash
     # Provide a simple pipeline configuration for Logstash with a bind-mounted file.
     volumes:
-      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-    networks: ['stack']
+      - ./config/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./config/logstash/logstash.yml:/opt/logstash/config/logstash.yml
+    networks:
+     - network
+    ports: ['0.0.0.0:1062:1062','0.0.0.0:5000:5000','0.0.0.0:5044:5044','0.0.0.0:5062:5062']
     depends_on: ['elasticsearch']
+
+  logspout:
+    image: bekt/logspout-logstash
+    restart: on-failure
+    environment:
+      ROUTE_URIS: logstash://logstash:5000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+     - network
 
   auditbeat:
     image: docker.elastic.co/beats/auditbeat:${TAG}
@@ -46,7 +63,8 @@ services:
     cap_add: ['AUDIT_CONTROL', 'AUDIT_READ']
     # Auditbeat must run in the main process namespace.
     pid: host
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['elasticsearch']
 
   filebeat:
@@ -54,14 +72,16 @@ services:
     container_name: filebeat
     # If the host system has logs at "/var/log", mount them at "/mnt/log"
     # inside the container, where Filebeat can find them.
-    # volumes: ['/var/log:/mnt/log:ro']
-    networks: ['stack']
+    volumes: ['/var/log:/mnt/log:ro']
+    networks:
+     - network
     depends_on: ['elasticsearch', 'setup_filebeat']
 
   heartbeat:
     image: docker.elastic.co/beats/heartbeat:${TAG}
     container_name: heartbeat
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['elasticsearch', 'setup_heartbeat']
 
   metricbeat:
@@ -75,7 +95,8 @@ services:
     #   - /proc:/hostfs/proc:ro
     #   - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
     #   - /:/hostfs:ro
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['elasticsearch', 'setup_metricbeat']
 
   packetbeat:
@@ -99,7 +120,8 @@ services:
     image: docker.elastic.co/apm/apm-server:${TAG}
     container_name: apm_server
     ports: ['127.0.0.1:8200:8200']
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['elasticsearch','setup_apm_server']
 
   # Run short-lived containers to set up the Beats.
@@ -110,7 +132,8 @@ services:
     # The script may have CR/LF line endings if using Docker for Windows, so
     # remove them so that they won't confuse Bash.
     command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s auditbeat']
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['kibana']
 
   setup_filebeat:
@@ -118,7 +141,8 @@ services:
     container_name: setup_filebeat
     volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
     command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s filebeat']
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['kibana']
 
   setup_heartbeat:
@@ -126,7 +150,8 @@ services:
     container_name: setup_heartbeat
     volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
     command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s heartbeat']
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['kibana']
 
   setup_metricbeat:
@@ -134,7 +159,8 @@ services:
     container_name: setup_metricbeat
     volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
     command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s metricbeat']
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['kibana']
 
   setup_packetbeat:
@@ -143,7 +169,8 @@ services:
     cap_add: ['NET_RAW', 'NET_ADMIN']
     volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
     command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s packetbeat']
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['kibana']
 
   setup_apm_server:
@@ -151,7 +178,15 @@ services:
     container_name: setup_apm_server
     volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
     command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s apm-server']
-    networks: ['stack']
+    networks:
+     - network
     depends_on: ['elasticsearch','kibana']
 
-networks: {stack: {}}
+
+# networks: {stack: {}}
+networks:
+  network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 100.64.14.160/27
