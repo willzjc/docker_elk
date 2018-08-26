@@ -49,6 +49,7 @@ services:
 
   logspout:
     image: bekt/logspout-logstash
+    container_name: logspout
     restart: on-failure
     # command: logstash+tcp://logstash:5000
     environment:
@@ -57,6 +58,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
      - network
+    depends_on: ['logstash']
+
 
   auditbeat:
     image: docker.elastic.co/beats/auditbeat:${TAG}
@@ -133,6 +136,17 @@ services:
     # The script may have CR/LF line endings if using Docker for Windows, so
     # remove them so that they won't confuse Bash.
     command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s auditbeat']
+    networks:
+     - network
+    depends_on: ['kibana']
+
+  setup_kibana:
+    image: docker.elastic.co/kibana/kibana:${TAG}
+    container_name: setup_kibana
+    # volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+    # The script may have CR/LF line endings if using Docker for Windows, so
+    # remove them so that they won't confuse Bash.
+    command: ['/bin/bash', '-c', '/usr/share/kibana/bin/kibana-plugin install https://github.com/sivasamyk/logtrail/releases/download/v0.1.29/logtrail-6.3.2-0.1.29.zip']
     networks:
      - network
     depends_on: ['kibana']
