@@ -48,12 +48,13 @@ services:
     depends_on: ['elasticsearch']
 
   logspout:
-    image: bekt/logspout-logstash
+    #image: bekt/logspout-logstash
+    image: logspout
     container_name: logspout
     restart: on-failure
     # command: logstash+tcp://logstash:5000
     environment:
-      ROUTE_URIS: logstash+tcp://logstash:5000
+      ROUTE_URIS: logstash+tcp://${LOGSPOUT_HOST}:5000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
