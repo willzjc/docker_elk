@@ -48,8 +48,8 @@ services:
     depends_on: ['elasticsearch']
 
   logspout:
-    #image: bekt/logspout-logstash
-    image: logspout
+    image: bekt/logspout-logstash
+    #image: logspout
     container_name: logspout
     restart: on-failure
     # command: logstash+tcp://logstash:5000
