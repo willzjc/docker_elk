@@ -40,6 +40,7 @@ services:
     container_name: logstash
     # Provide a simple pipeline configuration for Logstash with a bind-mounted file.
     volumes:
+      - ./config/logstash/general:/opt/logstash/general
       - ./config/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
       - ./config/logstash/logstash.yml:/opt/logstash/config/logstash.yml
     networks:
@@ -203,6 +204,6 @@ services:
 networks:
   network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 100.64.14.160/27
+    # ipam:
+    #   config:
+    #     - subnet: 100.64.14.160/27
