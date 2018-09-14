@@ -54,8 +54,8 @@ services:
     command: ['/bin/bash', '-c', 'if /usr/share/logstash/bin/logstash-plugin list | grep logstash-filter-fix_protocol  ; then echo 1 ; else /usr/share/logstash/bin/logstash-plugin install logstash-filter-fix_protocol ; fi ; /usr/local/bin/docker-entrypoint']
 
   logspout:
-    #image: bekt/logspout-logstash
-    image: logspout
+    image: bekt/logspout-logstash
+    #image: logspout
     container_name: logspout
     restart: on-failure
     # command: logstash+tcp://logstash:5000
