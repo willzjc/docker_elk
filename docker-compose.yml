@@ -32,8 +32,8 @@ services:
     networks:
      - network
     depends_on: ['elasticsearch']
-    #volumes:
-    #  - ./config/kibana/*:/usr/share/kibana/*
+    volumes:
+     - ./config/kibana/logtrail.json:/usr/share/kibana/logtrail.json
     # /usr/share/kibana/bin/kibana-plugin install https://github.com/sivasamyk/logtrail/releases/download/v0.1.30/logtrail-6.4.0-0.1.30.zip
     # command: ['/bin/bash', '-c', 'if /usr/share/kibana/bin/kibana-plugin list | grep logtrail  ; then echo 1 ; else /usr/share/kibana/bin/kibana-plugin  install https://github.com/sivasamyk/logtrail/releases/download/v0.1.30/logtrail-6.4.0-0.1.30.zip ; fi ; /usr/local/bin/docker-entrypoint']
 

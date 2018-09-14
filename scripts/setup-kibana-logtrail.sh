@@ -23,7 +23,7 @@ elif [ "${LOCALTAG}" = "6.3.2" ]  ; then
 elif [ "${LOCALTAG}" = "6.3.0" ]  ; then
 	export LOGTRAIL_URL="https://github.com/sivasamyk/logtrail/releases/download/v0.1.27/logtrail-6.3.0-0.1.27.zip" ;
 elif [ "${LOCALTAG}" = "6.2.4" ]  ; then
-	export LOGTRAIL_URL="https://github.com/sivasamyk/logtrail/releases/download/v0.1.27/logtrail-6.2.4-0.1.27.zip" ; 
+	export LOGTRAIL_URL="https://github.com/sivasamyk/logtrail/releases/download/v0.1.27/logtrail-6.2.4-0.1.27.zip" ;
 else
 	echo "Must define version for this to function"
 	exit 1
@@ -32,6 +32,11 @@ fi
 # Installs Logtrail via container execution
 echo "Variables set at ${LOCALTAG}, from URL: ${LOGTRAIL_URL}. Next step: Attempting to install now if not present"
 docker exec -it kibana bash -c "if /usr/share/kibana/bin/kibana-plugin list | grep logtrail  ; then echo 'Not installing, plugin already present' ; else /usr/share/kibana/bin/kibana-plugin install $LOGTRAIL_URL ; fi"
+
+# Update logtrail config
+echo 'Copying logtrail config file over'
+docker cp ../config/kibana/logtrail.json kibana:/usr/share/kibana/plugins/logtrail/logtrail.json.new
+docker exec -it kibana bash -c "cat /usr/share/kibana/plugins/logtrail/logtrail.json.new > /usr/share/kibana/plugins/logtrail/logtrail.json"
+
 echo -e "Restartng Kibana..."
 docker restart kibana
-
