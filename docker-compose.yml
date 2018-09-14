@@ -34,6 +34,8 @@ services:
     depends_on: ['elasticsearch']
     #volumes:
     #  - ./config/kibana/*:/usr/share/kibana/*
+    # /usr/share/kibana/bin/kibana-plugin install https://github.com/sivasamyk/logtrail/releases/download/v0.1.30/logtrail-6.4.0-0.1.30.zip
+    # command: ['/bin/bash', '-c', 'if /usr/share/kibana/bin/kibana-plugin list | grep logtrail  ; then echo 1 ; else /usr/share/kibana/bin/kibana-plugin  install https://github.com/sivasamyk/logtrail/releases/download/v0.1.30/logtrail-6.4.0-0.1.30.zip ; fi ; /usr/local/bin/docker-entrypoint']
 
   logstash:
     image: docker.elastic.co/logstash/logstash:${TAG}
@@ -43,10 +45,13 @@ services:
       - ./config/logstash/general:/opt/logstash/general
       - ./config/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
       - ./config/logstash/logstash.yml:/opt/logstash/config/logstash.yml
+      # - ./scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh'
+      # - ./scripts/setup-logstash.sh:/opt/logstash/setup-logstash.sh'
     networks:
      - network
     ports: ['0.0.0.0:1062:1062','0.0.0.0:5000:5000','0.0.0.0:5044:5044','0.0.0.0:5062:5062']
     depends_on: ['elasticsearch']
+    command: ['/bin/bash', '-c', 'if /usr/share/logstash/bin/logstash-plugin list | grep logstash-filter-fix_protocol  ; then echo 1 ; else /usr/share/logstash/bin/logstash-plugin install logstash-filter-fix_protocol ; fi ; /usr/local/bin/docker-entrypoint']
 
   logspout:
     #image: bekt/logspout-logstash
@@ -179,6 +184,15 @@ services:
     networks:
      - network
     depends_on: ['kibana']
+
+  # setup_logstash:
+  #   image: docker.elastic.co/logstash/logstash:${TAG}
+  #   container_name: setup_logstash
+  #   volumes: ['./scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh:ro']
+  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-logstash.sh | tr -d "\r" | bash -s metricbeat']
+  #   networks:
+  #    - network
+  #   depends_on: ['logstash']
 
   setup_packetbeat:
     image: docker.elastic.co/beats/packetbeat:${TAG}
