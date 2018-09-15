@@ -24,6 +24,7 @@ services:
     ports: ['0.0.0.0:9200:9200']
     networks:
      - network
+    restart: on-failure
 
   kibana:
     image: docker.elastic.co/kibana/kibana:${TAG}
@@ -52,6 +53,7 @@ services:
     ports: ['0.0.0.0:1062:1062','0.0.0.0:5000:5000','0.0.0.0:5044:5044','0.0.0.0:5062:5062']
     depends_on: ['elasticsearch']
     command: ['/bin/bash', '-c', 'if /usr/share/logstash/bin/logstash-plugin list | grep logstash-filter-fix_protocol  ; then echo 1 ; else /usr/share/logstash/bin/logstash-plugin install logstash-filter-fix_protocol ; fi ; /usr/local/bin/docker-entrypoint']
+    restart: on-failure
 
   logspout:
     image: bekt/logspout-logstash
@@ -212,6 +214,42 @@ services:
     networks:
      - network
     depends_on: ['elasticsearch','kibana']
+
+  nodejs_api: # Node.js App
+    container_name: nodejs-api
+    build: .
+    ports:
+      - "3000:3000" # Expose API port
+      - "9229:9229" # Expose Node process debug port (disable in production)
+    environment: # Set ENV vars
+     - NODE_ENV=local
+     - ES_HOST=elasticsearch
+     - PORT=3000
+    volumes: # Attach local book data directory
+      - ./books:/usr/src/app/books
+
+  nodejs_frontend: # Nginx Server For Frontend App
+    container_name: nodejs-frontend
+    image: nginx
+    volumes: # Serve local "public" dir
+      - ./public:/usr/share/nginx/html
+    ports:
+      - "28082:80" # Forward site to localhost:8080
+    depends_on: ['elasticsearch','kibana']
+
+
+  # elasticsearch: # Elasticsearch Instance
+  #   container_name: gs-search
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:6.4.0
+  #   volumes: # Persist ES data in seperate "esdata" volume
+  #     - esdata:/usr/share/elasticsearch/data
+  #   environment:
+  #     - bootstrap.memory_lock=true
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #     - discovery.type=single-node
+  #   ports: # Expose ElasticSearch ports
+  #     - "9301:9300"
+  #     - "9201:9200"
 
 
 # networks: {stack: {}}
