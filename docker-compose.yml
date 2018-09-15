@@ -216,7 +216,7 @@ services:
     depends_on: ['elasticsearch','kibana']
 
   nodejs_api: # Node.js App
-    container_name: nodejs-api
+    container_name: gs-api
     build: .
     ports:
       - "3000:3000" # Expose API port
