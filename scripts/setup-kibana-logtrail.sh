@@ -11,6 +11,12 @@ export LOCALTAG=$TAG
 
 if [ -z $1 ] ; then
 	echo -e "No argument passed"
+	if [ -z $LOCALTAG  ] ; then
+		echo '${TAG} also empty - Defaulting to 6.4.0 as TAG' ;
+		export LOCALTAG="6.4.0";
+
+	fi
+
 else
 	export LOCALTAG=$1 ;
 fi
@@ -34,6 +40,7 @@ echo "Variables set at ${LOCALTAG}, from URL: ${LOGTRAIL_URL}. Next step: Attemp
 docker exec -it kibana bash -c "if /usr/share/kibana/bin/kibana-plugin list | grep logtrail  ; then echo 'Not installing, plugin already present' ; else /usr/share/kibana/bin/kibana-plugin install $LOGTRAIL_URL ; fi"
 
 # Update logtrail config
+
 echo 'Copying logtrail config file over'
 docker cp ../config/kibana/logtrail.json kibana:/usr/share/kibana/plugins/logtrail/logtrail.json.new
 docker exec -it kibana bash -c "cat /usr/share/kibana/plugins/logtrail/logtrail.json.new > /usr/share/kibana/plugins/logtrail/logtrail.json"
