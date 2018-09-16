@@ -216,8 +216,8 @@ services:
     depends_on: ['elasticsearch','kibana']
 
   # nodejs_api: # Node.js App
-  api: # Node.js App
-    container_name: gs-api
+  vuejs_api: # Node.js App
+    container_name: vuejs_api
     build: .
     ports:
       - "3000:3000" # Expose API port
@@ -233,8 +233,8 @@ services:
       - network
 
   # nodejs_frontend: # Nginx Server For Frontend App
-  frontend: # Nginx Server For Frontend App
-    container_name: gs-frontend
+  vuejs_frontend: # Nginx Server For Frontend App
+    container_name: vuejs_frontend
     image: nginx
     volumes: # Serve local "public" dir
       - ./public:/usr/share/nginx/html

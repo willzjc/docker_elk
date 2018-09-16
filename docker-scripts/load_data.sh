@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-docker exec gs-api "node" "server/load_data.js"
+GS_API='vuejs_api'
+docker exec $GS_API "node" "server/load_data.js"
