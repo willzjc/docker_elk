@@ -42,7 +42,17 @@ docker exec -it kibana bash -c "if /usr/share/kibana/bin/kibana-plugin list | gr
 # Update logtrail config
 
 echo 'Copying logtrail config file over'
-docker cp ../config/kibana/logtrail.json kibana:/usr/share/kibana/plugins/logtrail/logtrail.json.new
+CURDIR=`pwd`
+export SOURCE_CONFIG=$CURDIR/config/kibana/logtrail.json
+
+if [[ $CURDIR =~ .*scripts$ ]];
+  then
+  echo "currentpath is too deep: $CURDIR"
+  # Cut suffix
+  export SOURCE_CONFIG=$(echo $CURDIR | rev | cut -c$((${#suffix}+9))- | rev)
+fi
+
+docker cp ${SOURCE_CONFIG} kibana:/usr/share/kibana/plugins/logtrail/logtrail.json.new
 docker exec -it kibana bash -c "cat /usr/share/kibana/plugins/logtrail/logtrail.json.new > /usr/share/kibana/plugins/logtrail/logtrail.json"
 
 echo -e "Restartng Kibana..."

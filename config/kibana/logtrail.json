@@ -25,9 +25,9 @@
         "keyword_suffix" : "keyword"
       },
       "color_mapping" : {
-      "field": "log_level",
+      "field": "stream",
 	      "mapping": {
-		"ERROR": "#FF0000",
+		"stderr": "#FF0000",
 		"WARN": "#FFEF96",
 		"DEBUG": "#B5E7A0",
 		"TRACE": "#CFE0E8"
