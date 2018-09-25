@@ -93,8 +93,9 @@ services:
     networks:
      - network
     depends_on: ['elasticsearch', 'setup_filebeat']
-    command: ['/bin/bash', '-c', 'if /usr/share/filebeat modules enable system postgresql logstash nginx elasticsearch; /usr/local/bin/docker-entrypoint']
-
+    command: ['/bin/bash', '-c', '/usr/share/filebeat/filebeat modules enable system postgresql logstash nginx elasticsearch; /usr/local/bin/docker-entrypoint ""']
+    environment:
+      - HOSTNAME=FilebeatHost
 
   heartbeat:
     image: docker.elastic.co/beats/heartbeat:${TAG}

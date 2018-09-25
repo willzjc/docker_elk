@@ -7,3 +7,5 @@ books
 books.zip
 scripts/books
 scripts/books.zip
+.idea
+.idea/*
