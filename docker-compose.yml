@@ -17,6 +17,7 @@ services:
   #
   #   ELASTIC_VERSION=6.0.0-beta1 TAG=6.0.0-beta1-3eab5b40 docker-compose up
   #
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:${TAG}
     container_name: elasticsearch
@@ -24,6 +25,7 @@ services:
     ports: ['0.0.0.0:9200:9200']
     networks:
      - network
+    command: ['/bin/bash', '-c', 'if /usr/share/elasticsearch/bin/elasticsearch-plugin list | grep ingest-geoip  ; then echo PLUGIN_ALREADY_INSTALLED ; else /usr/share/elasticsearch/bin/elasticsearch-plugin install ingest-geoip; fi ; /usr/local/bin/docker-entrypoint.sh']
     restart: on-failure
 
   kibana:
@@ -35,9 +37,12 @@ services:
     depends_on: ['elasticsearch']
     volumes:
      - ./config/kibana/logtrail.json:/usr/share/kibana/logtrail.json
-    # /usr/share/kibana/bin/kibana-plugin install https://github.com/sivasamyk/logtrail/releases/download/v0.1.30/logtrail-6.4.0-0.1.30.zip
-    # command: ['/bin/bash', '-c', 'if /usr/share/kibana/bin/kibana-plugin list | grep logtrail  ; then echo 1 ; else /usr/share/kibana/bin/kibana-plugin  install https://github.com/sivasamyk/logtrail/releases/download/v0.1.30/logtrail-6.4.0-0.1.30.zip ; fi ; /usr/local/bin/docker-entrypoint']
+     - "./scripts/containerized-setup-kibana-logtrail.sh:/usr/share/kibana/containerized-setup-kibana-logtrail.sh"
+    environment: # Set ENV vars
+      - TAG=${TAG}
+    command: ['/bin/bash', '-c', './containerized-setup-kibana-logtrail.sh ; /usr/local/bin/kibana-docker']
     restart: on-failure
+
 
   logstash:
     image: docker.elastic.co/logstash/logstash:${TAG}
@@ -47,8 +52,6 @@ services:
       - ./config/logstash/general:/opt/logstash/general
       - ./config/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
       - ./config/logstash/logstash.yml:/opt/logstash/config/logstash.yml
-      # - ./scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh'
-      # - ./scripts/setup-logstash.sh:/opt/logstash/setup-logstash.sh'
     networks:
      - network
     ports: ['0.0.0.0:1062:1062','0.0.0.0:5000:5000','0.0.0.0:5044:5044','0.0.0.0:5062:5062']
@@ -90,6 +93,8 @@ services:
     networks:
      - network
     depends_on: ['elasticsearch', 'setup_filebeat']
+    command: ['/bin/bash', '-c', 'if /usr/share/filebeat modules enable system postgresql logstash nginx elasticsearch; /usr/local/bin/docker-entrypoint']
+
 
   heartbeat:
     image: docker.elastic.co/beats/heartbeat:${TAG}
@@ -150,17 +155,6 @@ services:
      - network
     depends_on: ['kibana']
 
-  setup_kibana:
-    image: docker.elastic.co/kibana/kibana:${TAG}
-    container_name: setup_kibana
-    # volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
-    # The script may have CR/LF line endings if using Docker for Windows, so
-    # remove them so that they won't confuse Bash.
-    command: ['/bin/bash', '-c', '/usr/share/kibana/bin/kibana-plugin install https://github.com/sivasamyk/logtrail/releases/download/v0.1.29/logtrail-6.3.2-0.1.29.zip']
-    networks:
-     - network
-    depends_on: ['kibana']
-
   setup_filebeat:
     image: docker.elastic.co/beats/filebeat:${TAG}
     container_name: setup_filebeat
@@ -187,15 +181,6 @@ services:
     networks:
      - network
     depends_on: ['kibana']
-
-  # setup_logstash:
-  #   image: docker.elastic.co/logstash/logstash:${TAG}
-  #   container_name: setup_logstash
-  #   volumes: ['./scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh:ro']
-  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-logstash.sh | tr -d "\r" | bash -s metricbeat']
-  #   networks:
-  #    - network
-  #   depends_on: ['logstash']
 
   setup_packetbeat:
     image: docker.elastic.co/beats/packetbeat:${TAG}
@@ -245,22 +230,6 @@ services:
     networks:
       - network
 
-
-  # elasticsearch: # Elasticsearch Instance
-  #   container_name: gs-search
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:6.4.0
-  #   volumes: # Persist ES data in seperate "esdata" volume
-  #     - esdata:/usr/share/elasticsearch/data
-  #   environment:
-  #     - bootstrap.memory_lock=true
-  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-  #     - discovery.type=single-node
-  #   ports: # Expose ElasticSearch ports
-  #     - "9301:9300"
-  #     - "9201:9200"
-
-
-# networks: {stack: {}}
 networks:
   network:
     driver: bridge
