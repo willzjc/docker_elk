@@ -9,3 +9,4 @@ scripts/books
 scripts/books.zip
 .idea
 .idea/*
+.venv
