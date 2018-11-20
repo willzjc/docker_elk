@@ -27,6 +27,8 @@ elif [ "${LOCALTAG}" = "6.3.0" ]  ; then
 	export LOGTRAIL_BINARY_URL="https://github.com/sivasamyk/logtrail/releases/download/v0.1.27/logtrail-6.3.0-0.1.27.zip" ;
 elif [ "${LOCALTAG}" = "6.2.4" ]  ; then
 	export LOGTRAIL_BINARY_URL="https://github.com/sivasamyk/logtrail/releases/download/v0.1.27/logtrail-6.2.4-0.1.27.zip" ;
+elif [ "${LOCALTAG}" = "6.5.0" ]  ; then
+	export LOGTRAIL_BINARY_URL="https://github.com/sivasamyk/logtrail/releases/download/v0.1.30/logtrail-6.5.0-0.1.30.zip" ;
 else
 	echo "Must define version for this to function"
 	exit 1
