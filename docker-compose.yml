@@ -74,162 +74,162 @@ services:
     depends_on: ['logstash']
 
 
-  auditbeat:
-    image: docker.elastic.co/beats/auditbeat:${TAG}
-    container_name: auditbeat
-    cap_add: ['AUDIT_CONTROL', 'AUDIT_READ']
-    # Auditbeat must run in the main process namespace.
-    pid: host
-    networks:
-     - network
-    depends_on: ['elasticsearch']
+  # auditbeat:
+  #   image: docker.elastic.co/beats/auditbeat:${TAG}
+  #   container_name: auditbeat
+  #   cap_add: ['AUDIT_CONTROL', 'AUDIT_READ']
+  #   # Auditbeat must run in the main process namespace.
+  #   pid: host
+  #   networks:
+  #    - network
+  #   depends_on: ['elasticsearch']
 
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:${TAG}
-    container_name: filebeat
-    # If the host system has logs at "/var/log", mount them at "/mnt/log"
-    # inside the container, where Filebeat can find them.
-    volumes: ['/var/log:/mnt/log:ro']
-    networks:
-     - network
-    depends_on: ['elasticsearch', 'setup_filebeat']
-    command: ['/bin/bash', '-c', '/usr/share/filebeat/filebeat modules enable system postgresql logstash nginx elasticsearch; /usr/local/bin/docker-entrypoint ""']
-    environment:
-      - HOSTNAME=FilebeatHost
+  # filebeat:
+  #   image: docker.elastic.co/beats/filebeat:${TAG}
+  #   container_name: filebeat
+  #   # If the host system has logs at "/var/log", mount them at "/mnt/log"
+  #   # inside the container, where Filebeat can find them.
+  #   volumes: ['/var/log:/mnt/log:ro']
+  #   networks:
+  #    - network
+  #   depends_on: ['elasticsearch', 'setup_filebeat']
+  #   command: ['/bin/bash', '-c', '/usr/share/filebeat/filebeat modules enable system postgresql logstash nginx elasticsearch; /usr/local/bin/docker-entrypoint ""']
+  #   environment:
+  #     - HOSTNAME=FilebeatHost
 
-  heartbeat:
-    image: docker.elastic.co/beats/heartbeat:${TAG}
-    container_name: heartbeat
-    networks:
-     - network
-    depends_on: ['elasticsearch', 'setup_heartbeat']
+  # heartbeat:
+  #   image: docker.elastic.co/beats/heartbeat:${TAG}
+  #   container_name: heartbeat
+  #   networks:
+  #    - network
+  #   depends_on: ['elasticsearch', 'setup_heartbeat']
 
-  metricbeat:
-    image: docker.elastic.co/beats/metricbeat:${TAG}
-    container_name: metricbeat
-    # The commented sections below enable Metricbeat to monitor the Docker host,
-    # rather than the Metricbeat container. It's problematic with Docker for
-    # Windows, however, since "/proc", "/sys" etc. don't exist on Windows.
-    # The same likely applies to OSX (needs testing).
-    # volumes:
-    #   - /proc:/hostfs/proc:ro
-    #   - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
-    #   - /:/hostfs:ro
-    networks:
-     - network
-    depends_on: ['elasticsearch', 'setup_metricbeat']
+  # metricbeat:
+  #   image: docker.elastic.co/beats/metricbeat:${TAG}
+  #   container_name: metricbeat
+  #   # The commented sections below enable Metricbeat to monitor the Docker host,
+  #   # rather than the Metricbeat container. It's problematic with Docker for
+  #   # Windows, however, since "/proc", "/sys" etc. don't exist on Windows.
+  #   # The same likely applies to OSX (needs testing).
+  #   # volumes:
+  #   #   - /proc:/hostfs/proc:ro
+  #   #   - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+  #   #   - /:/hostfs:ro
+  #   networks:
+  #    - network
+  #   depends_on: ['elasticsearch', 'setup_metricbeat']
 
-  packetbeat:
-    image: docker.elastic.co/beats/packetbeat:${TAG}
-    container_name: packetbeat
-    # Packetbeat needs some elevated privileges to capture network traffic.
-    # We'll grant them with POSIX capabilities.
-    cap_add: ['NET_RAW', 'NET_ADMIN']
-    # Use "host mode" networking to allow Packetbeat to capture traffic from
-    # the real network interface on the host, rather than being isolated to the
-    # container's virtual interface.
-    network_mode: host
-    # Since we did that, Packetbeat is not part of the "stack" Docker network
-    # that the other containers are connected to, and thus can't resolve the
-    # hostname "elasticsearch". Instead, we'll tell it to find Elasticsearch
-    # on "localhost", which is the Docker host machine in this context.
-    command: -e -E 'output.elasticsearch.hosts=["localhost:9200"]'
-    depends_on: ['elasticsearch']
+  # packetbeat:
+  #   image: docker.elastic.co/beats/packetbeat:${TAG}
+  #   container_name: packetbeat
+  #   # Packetbeat needs some elevated privileges to capture network traffic.
+  #   # We'll grant them with POSIX capabilities.
+  #   cap_add: ['NET_RAW', 'NET_ADMIN']
+  #   # Use "host mode" networking to allow Packetbeat to capture traffic from
+  #   # the real network interface on the host, rather than being isolated to the
+  #   # container's virtual interface.
+  #   network_mode: host
+  #   # Since we did that, Packetbeat is not part of the "stack" Docker network
+  #   # that the other containers are connected to, and thus can't resolve the
+  #   # hostname "elasticsearch". Instead, we'll tell it to find Elasticsearch
+  #   # on "localhost", which is the Docker host machine in this context.
+  #   command: -e -E 'output.elasticsearch.hosts=["localhost:9200"]'
+  #   depends_on: ['elasticsearch']
 
-  apm_server:
-    image: docker.elastic.co/apm/apm-server:${TAG}
-    container_name: apm_server
-    ports: ['127.0.0.1:8200:8200']
-    networks:
-     - network
-    depends_on: ['elasticsearch','setup_apm_server']
+  # apm_server:
+  #   image: docker.elastic.co/apm/apm-server:${TAG}
+  #   container_name: apm_server
+  #   ports: ['127.0.0.1:8200:8200']
+  #   networks:
+  #    - network
+  #   depends_on: ['elasticsearch','setup_apm_server']
 
-  # Run short-lived containers to set up the Beats.
-  setup_auditbeat:
-    image: docker.elastic.co/beats/auditbeat:${TAG}
-    container_name: setup_auditbeat
-    volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
-    # The script may have CR/LF line endings if using Docker for Windows, so
-    # remove them so that they won't confuse Bash.
-    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s auditbeat']
-    networks:
-     - network
-    depends_on: ['kibana']
+  # # Run short-lived containers to set up the Beats.
+  # setup_auditbeat:
+  #   image: docker.elastic.co/beats/auditbeat:${TAG}
+  #   container_name: setup_auditbeat
+  #   volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+  #   # The script may have CR/LF line endings if using Docker for Windows, so
+  #   # remove them so that they won't confuse Bash.
+  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s auditbeat']
+  #   networks:
+  #    - network
+  #   depends_on: ['kibana']
 
-  setup_filebeat:
-    image: docker.elastic.co/beats/filebeat:${TAG}
-    container_name: setup_filebeat
-    volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
-    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s filebeat']
-    networks:
-     - network
-    depends_on: ['kibana']
+  # setup_filebeat:
+  #   image: docker.elastic.co/beats/filebeat:${TAG}
+  #   container_name: setup_filebeat
+  #   volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s filebeat']
+  #   networks:
+  #    - network
+  #   depends_on: ['kibana']
 
-  setup_heartbeat:
-    image: docker.elastic.co/beats/heartbeat:${TAG}
-    container_name: setup_heartbeat
-    volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
-    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s heartbeat']
-    networks:
-     - network
-    depends_on: ['kibana']
+  # setup_heartbeat:
+  #   image: docker.elastic.co/beats/heartbeat:${TAG}
+  #   container_name: setup_heartbeat
+  #   volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s heartbeat']
+  #   networks:
+  #    - network
+  #   depends_on: ['kibana']
 
-  setup_metricbeat:
-    image: docker.elastic.co/beats/metricbeat:${TAG}
-    container_name: setup_metricbeat
-    volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
-    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s metricbeat']
-    networks:
-     - network
-    depends_on: ['kibana']
+  # setup_metricbeat:
+  #   image: docker.elastic.co/beats/metricbeat:${TAG}
+  #   container_name: setup_metricbeat
+  #   volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s metricbeat']
+  #   networks:
+  #    - network
+  #   depends_on: ['kibana']
 
-  setup_packetbeat:
-    image: docker.elastic.co/beats/packetbeat:${TAG}
-    container_name: setup_packetbeat
-    cap_add: ['NET_RAW', 'NET_ADMIN']
-    volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
-    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s packetbeat']
-    networks:
-     - network
-    depends_on: ['kibana']
+  # setup_packetbeat:
+  #   image: docker.elastic.co/beats/packetbeat:${TAG}
+  #   container_name: setup_packetbeat
+  #   cap_add: ['NET_RAW', 'NET_ADMIN']
+  #   volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s packetbeat']
+  #   networks:
+  #    - network
+  #   depends_on: ['kibana']
 
-  setup_apm_server:
-    image: docker.elastic.co/apm/apm-server:${TAG}
-    container_name: setup_apm_server
-    volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
-    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s apm-server']
-    networks:
-     - network
-    depends_on: ['elasticsearch','kibana']
+  # setup_apm_server:
+  #   image: docker.elastic.co/apm/apm-server:${TAG}
+  #   container_name: setup_apm_server
+  #   volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s apm-server']
+  #   networks:
+  #    - network
+  #   depends_on: ['elasticsearch','kibana']
 
-  # nodejs_api: # Node.js App
-  vuejs_api: # Node.js App
-    container_name: vuejs_api
-    build: .
-    ports:
-      - "3001:3001" # Expose API port
-      - "9229:9229" # Expose Node process debug port (disable in production)
-    environment: # Set ENV vars
-      - NODE_ENV=local
-      - ES_HOST=elasticsearch
-      - PORT=3001
-    volumes: # Attach local book data directory
-      - ./books:/usr/src/app/books
-    depends_on: ['elasticsearch','kibana']
-    networks:
-      - network
+  # # nodejs_api: # Node.js App
+  # vuejs_api: # Node.js App
+  #   container_name: vuejs_api
+  #   build: .
+  #   ports:
+  #     - "3001:3001" # Expose API port
+  #     - "9229:9229" # Expose Node process debug port (disable in production)
+  #   environment: # Set ENV vars
+  #     - NODE_ENV=local
+  #     - ES_HOST=elasticsearch
+  #     - PORT=3001
+  #   volumes: # Attach local book data directory
+  #     - ./books:/usr/src/app/books
+  #   depends_on: ['elasticsearch','kibana']
+  #   networks:
+  #     - network
 
-  # nodejs_frontend: # Nginx Server For Frontend App
-  vuejs_frontend: # Nginx Server For Frontend App
-    container_name: vuejs_frontend
-    image: nginx
-    volumes: # Serve local "public" dir
-      - ./public:/usr/share/nginx/html
-    ports:
-      - "28082:80" # Forward site to localhost:8080
-    depends_on: ['elasticsearch','kibana']
-    networks:
-      - network
+  # # nodejs_frontend: # Nginx Server For Frontend App
+  # vuejs_frontend: # Nginx Server For Frontend App
+  #   container_name: vuejs_frontend
+  #   image: nginx
+  #   volumes: # Serve local "public" dir
+  #     - ./public:/usr/share/nginx/html
+  #   ports:
+  #     - "28082:80" # Forward site to localhost:8080
+  #   depends_on: ['elasticsearch','kibana']
+  #   networks:
+  #     - network
 
 networks:
   network:
