@@ -36,13 +36,13 @@ services:
      - network
     depends_on: ['elasticsearch']
     volumes:
-     - ./config/kibana/logtrail.json:/usr/share/kibana/logtrail.json
+     - ./config/kibana/logtrail/:/usr/share/kibana/logtrail_package/
+     - ./config/kibana/logtrail_colored.json:/etc/logtrail.json
      - "./scripts/containerized-setup-kibana-logtrail.sh:/usr/share/kibana/containerized-setup-kibana-logtrail.sh"
     environment: # Set ENV vars
       - TAG=${TAG}
     command: ['/bin/bash', '-c', './containerized-setup-kibana-logtrail.sh ; /usr/local/bin/kibana-docker']
     restart: on-failure
-
 
   logstash:
     image: docker.elastic.co/logstash/logstash:${TAG}
@@ -74,6 +74,28 @@ services:
     depends_on: ['logstash']
 
 
+  setup_filebeat:
+    image: docker.elastic.co/beats/filebeat:${TAG}
+    container_name: setup_filebeat
+    volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s filebeat']
+    networks:
+     - network
+    depends_on: ['kibana']
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:${TAG}
+    container_name: filebeat
+    # If the host system has logs at "/var/log", mount them at "/mnt/log"
+    # inside the container, where Filebeat can find them.
+    volumes: ['/var/log:/mnt/log:ro']
+    networks:
+     - network
+    depends_on: ['elasticsearch', 'setup_filebeat']
+    command: ['/bin/bash', '-c', '/usr/share/filebeat/filebeat modules enable system postgresql logstash nginx elasticsearch; /usr/local/bin/docker-entrypoint ""']
+    environment:
+      - HOSTNAME=FilebeatHost
+
   # auditbeat:
   #   image: docker.elastic.co/beats/auditbeat:${TAG}
   #   container_name: auditbeat
@@ -83,19 +105,6 @@ services:
   #   networks:
   #    - network
   #   depends_on: ['elasticsearch']
-
-  # filebeat:
-  #   image: docker.elastic.co/beats/filebeat:${TAG}
-  #   container_name: filebeat
-  #   # If the host system has logs at "/var/log", mount them at "/mnt/log"
-  #   # inside the container, where Filebeat can find them.
-  #   volumes: ['/var/log:/mnt/log:ro']
-  #   networks:
-  #    - network
-  #   depends_on: ['elasticsearch', 'setup_filebeat']
-  #   command: ['/bin/bash', '-c', '/usr/share/filebeat/filebeat modules enable system postgresql logstash nginx elasticsearch; /usr/local/bin/docker-entrypoint ""']
-  #   environment:
-  #     - HOSTNAME=FilebeatHost
 
   # heartbeat:
   #   image: docker.elastic.co/beats/heartbeat:${TAG}
@@ -156,14 +165,7 @@ services:
   #    - network
   #   depends_on: ['kibana']
 
-  # setup_filebeat:
-  #   image: docker.elastic.co/beats/filebeat:${TAG}
-  #   container_name: setup_filebeat
-  #   volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
-  #   command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s filebeat']
-  #   networks:
-  #    - network
-  #   depends_on: ['kibana']
+
 
   # setup_heartbeat:
   #   image: docker.elastic.co/beats/heartbeat:${TAG}
