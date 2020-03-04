@@ -204,34 +204,35 @@ services:
   #    - network
   #   depends_on: ['elasticsearch','kibana']
 
-  # # nodejs_api: # Node.js App
-  # vuejs_api: # Node.js App
-  #   container_name: vuejs_api
-  #   build: .
-  #   ports:
-  #     - "3001:3001" # Expose API port
-  #     - "9229:9229" # Expose Node process debug port (disable in production)
-  #   environment: # Set ENV vars
-  #     - NODE_ENV=local
-  #     - ES_HOST=elasticsearch
-  #     - PORT=3001
-  #   volumes: # Attach local book data directory
-  #     - ./books:/usr/src/app/books
-  #   depends_on: ['elasticsearch','kibana']
-  #   networks:
-  #     - network
+  # nodejs_api: # Node.js App
+  vuejs_api: # Node.js App
+    container_name: vuejs_api
+    build: .
+    ports:
+      - "3001:3001" # Expose API port
+      - "9229:9229" # Expose Node process debug port (disable in production)
+    environment:    # Set ENV vars
+      - NODE_ENV=local
+      - ES_HOST=elasticsearch
+      - PORT=3001
+    volumes:        # Attach local book data directory
+      - ./books:/books
+    depends_on: ['elasticsearch','kibana']
+    networks:
+      - network
+    command: ['/bin/bash', '-c', 'unzip /books/books.zip && node /usr/src/app/server/load_data.js']
 
-  # # nodejs_frontend: # Nginx Server For Frontend App
-  # vuejs_frontend: # Nginx Server For Frontend App
-  #   container_name: vuejs_frontend
-  #   image: nginx
-  #   volumes: # Serve local "public" dir
-  #     - ./public:/usr/share/nginx/html
-  #   ports:
-  #     - "28082:80" # Forward site to localhost:8080
-  #   depends_on: ['elasticsearch','kibana']
-  #   networks:
-  #     - network
+  # nodejs_frontend: # Nginx Server For Frontend App
+  vuejs_frontend: # Nginx Server For Frontend App
+    container_name: vuejs_frontend
+    image: nginx
+    volumes: # Serve local "public" dir
+      - ./public:/usr/share/nginx/html
+    ports:
+      - "28082:80" # Forward site to localhost:8080
+    depends_on: ['elasticsearch','kibana']
+    networks:
+      - network
 
 networks:
   network:
