@@ -165,8 +165,6 @@ services:
   #    - network
   #   depends_on: ['kibana']
 
-
-
   # setup_heartbeat:
   #   image: docker.elastic.co/beats/heartbeat:${TAG}
   #   container_name: setup_heartbeat
@@ -220,16 +218,16 @@ services:
     depends_on: ['elasticsearch','kibana']
     networks:
       - network
-    command: ['/bin/bash', '-c', 'unzip /books/books.zip && node /usr/src/app/server/load_data.js']
+    command: ['/bin/bash', '-c', 'unzip /books/books.zip && node /usr/src/app/server/load_data.js && npm start && sleep infinity']
 
   # nodejs_frontend: # Nginx Server For Frontend App
   vuejs_frontend: # Nginx Server For Frontend App
     container_name: vuejs_frontend
     image: nginx
-    volumes: # Serve local "public" dir
+    volumes:                                  # Serve local "public" dir
       - ./public:/usr/share/nginx/html
     ports:
-      - "28082:80" # Forward site to localhost:8080
+      - "28082:80"                            # Host port 28082 --> container port 80
     depends_on: ['elasticsearch','kibana']
     networks:
       - network
