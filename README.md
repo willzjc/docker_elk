@@ -3,9 +3,21 @@ This example Docker Compose configuration demonstrates many components of the
 Elastic Stack, all running on a single machine under Docker.
 
 ## Starting the stack
-Try `docker-compose up` to create a demonstration Elastic Stack with
-Elasticsearch, Kibana, Logstash, APM Server, Auditbeat, Metricbeat, Filebeat,
-Packetbeat, and Heartbeat.
+
+
+To create a demonstration Elastic Stack - run the following:
+
+```
+docker-compose up -d
+```
+
+It will run the following
+1. Elasticsearch
+2. Logstash
+3. Logtrail
+4. VueJS integrated frontend
+5. NodeJS backend host to manage API calls to and from Elasticsearch
+6. NGINX for HTML hosting for book search (2000 books)
 
 ### Kibana frontend
 Point a browser at [`http://localhost:5601`](http://localhost:5601) to see the results.
