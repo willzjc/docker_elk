@@ -12,7 +12,7 @@ Point a browser at [`http://localhost:5601`](http://localhost:5601) to see the r
 
 ### Front end for book searching
 Point a browser at [`http://localhost:28082`](http://localhost:28082) to see the results.
-![NodeJS frontend to see the capabilities of Elasticsearch](screenshots/nodejsfrontend.png)
+![NodeJS frontend to see the capabilities of Elasticsearch](screenshots/elk_search.gif)
 
 
 ## Prerequisites
